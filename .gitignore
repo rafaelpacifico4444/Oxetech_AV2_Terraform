@@ -1,0 +1,12 @@
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+tfplan
+terraform.tfvars
+crash.log
+crash.*.log
+*.tfvars.json
+.env
+*.tfvars
+lambda_function.zip
