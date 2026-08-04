@@ -15,7 +15,7 @@ resource "aws_lb_target_group" "web" {
   vpc_id   = aws_vpc.lab.id
 
   health_check {
-    path                = "/healthy"
+    path                = "/health"
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30
