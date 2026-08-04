@@ -63,7 +63,6 @@ data "aws_iam_policy_document" "github_assume_role" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:ref:refs/heads/master",
-        "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:ref:refs/heads/develop",
         "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:pull_request"
       ]
     }
