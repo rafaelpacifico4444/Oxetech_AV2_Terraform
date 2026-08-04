@@ -134,10 +134,10 @@ jobs:
                 const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
                 const changes = plan.resource_changes || [];
                 const summary = `
-**Terraform Plan Summary:**
-- Resources to add: ${changes.filter(c => c.change.actions.includes('create')).length}
-- Resources to modify: ${changes.filter(c => c.change.actions.includes('update')).length}
-- Resources to destroy: ${changes.filter(c => c.change.actions.includes('delete')).length}
+            **Terraform Plan Summary:**
+            - Resources to add: ${changes.filter(c => c.change.actions.includes('create')).length}
+            - Resources to modify: ${changes.filter(c => c.change.actions.includes('update')).length}
+            - Resources to destroy: ${changes.filter(c => c.change.actions.includes('delete')).length}
                 `;
                 planOutput = summary;
               } catch (e) {
