@@ -6,7 +6,7 @@ resource "aws_launch_template" "web" {
   image_id      = data.aws_ssm_parameter.ubuntu_2404.value
   instance_type = var.instance_type
   key_name      = aws_key_pair.lab.key_name
-  user_data = base64encode(templatefile("${path.module}/../scripts/user-data.sh", {
+  user_data = base64encode(templatefile("${path.module}/user-data.sh", {
   flask_secret_key = var.flask_secret_key
   db_host          = aws_db_instance.lab.address
   db_name          = var.db_name

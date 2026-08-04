@@ -3,7 +3,7 @@
 # ── Empacota o .py em .zip automaticamente ──────────────────────────────────
 data "archive_file" "webhook" {
   type        = "zip"
-  source_file = "${path.module}/../lambda/webhook/lambda_function.py"
+  source_file = "${path.module}/lambda_function.py"
   output_path = "${path.module}/lambda_function.zip"
 }
 
