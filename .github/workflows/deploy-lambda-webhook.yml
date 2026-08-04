@@ -2,7 +2,7 @@ name: Deploy Lambda Webhook
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
     paths:
       - 'lambda/webhook/lambda_function.py'
       - '.github/workflows/deploy-lambda-webhook.yml'

@@ -2,12 +2,12 @@ name: Terraform Validate & Plan
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-validate.yml'
   pull_request:
-    branches: [main]
+    branches: [master, main]
     paths:
       - 'terraform/**'
 
