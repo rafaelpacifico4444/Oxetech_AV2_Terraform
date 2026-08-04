@@ -1,3 +1,11 @@
+resource "aws_route53_zone" "primary" {
+  name = var.domain_name # "olhanuvem.dev"
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-zone"
+  }
+}
+
 data "aws_route53_zone" "primary" {
   name         = var.domain_name
   private_zone = false
@@ -62,8 +70,8 @@ resource "aws_acm_certificate" "cdn" {
 
 resource "aws_acm_certificate_validation" "cdn" {
   provider                = aws.us_east_1
-  certificate_arn          = aws_acm_certificate.cdn.arn
-  validation_record_fqdns  = [for record in aws_route53_record.validation : record.fqdn]
+  certificate_arn         = aws_acm_certificate.cdn.arn
+  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
 
 # ---------------------------------------------------------------------------
