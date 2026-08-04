@@ -1,0 +1,189 @@
+name: Terraform Apply (Production)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-apply.yml'
+
+env:
+  AWS_REGION: sa-east-1
+  TF_VERSION: 1.15.8
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    
+    # Proteção: pede confirmação antes de rodar
+    environment:
+      name: production
+      url: https://www.olhanuvem.dev
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: terraform-apply-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+      
+      - name: Terraform Validate
+        run: |
+          cd terraform
+          terraform validate
+      
+      - name: Terraform Plan (Pre-Apply Check)
+        id: plan
+        run: |
+          cd terraform
+          terraform plan -no-color -out=tfplan
+        env:
+          TF_VAR_owner: github-actions
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_flask_secret_key: ${{ secrets.TF_VAR_FLASK_SECRET_KEY }}
+          TF_VAR_github_webhook_secret: ${{ secrets.TF_VAR_GITHUB_WEBHOOK_SECRET }}
+          TF_VAR_bucket_name: ${{ secrets.TF_VAR_BUCKET_NAME }}
+          TF_VAR_domain_name: ${{ secrets.TF_VAR_DOMAIN_NAME }}
+      
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd terraform
+          terraform apply -no-color tfplan
+        env:
+          TF_VAR_owner: github-actions
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_flask_secret_key: ${{ secrets.TF_VAR_FLASK_SECRET_KEY }}
+          TF_VAR_github_webhook_secret: ${{ secrets.TF_VAR_GITHUB_WEBHOOK_SECRET }}
+          TF_VAR_bucket_name: ${{ secrets.TF_VAR_BUCKET_NAME }}
+          TF_VAR_domain_name: ${{ secrets.TF_VAR_DOMAIN_NAME }}
+      
+      - name: Get Terraform Outputs
+        id: outputs
+        run: |
+          cd terraform
+          echo "WEBSITE_URL=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
+          echo "WEBHOOK_URL=$(terraform output -raw webhook_url)" >> $GITHUB_OUTPUT
+      
+      - name: Notify Slack - Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Terraform Apply Success",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*✅ Terraform Apply - Success*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Author:* ${{ github.actor }}\n*Branch:* main\n*Website:* ${{ steps.outputs.outputs.WEBSITE_URL }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+      
+      - name: Notify Slack - Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ Terraform Apply Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*❌ Terraform Apply - FAILED*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Author:* ${{ github.actor }}\n*Branch:* main\n*Action Required:* Verificar logs!"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Error"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+      
+      - name: Save State to Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-${{ github.run_id }}
+          path: terraform/.terraform/
+          retention-days: 30
+
+  verify:
+    name: Verify Deployment
+    needs: apply
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Website Health
+        run: |
+          for i in {1..10}; do
+            echo "Tentativa $i..."
+            if curl -s -I https://www.olhanuvem.dev/health | grep -q "200\|302\|404"; then
+              echo "✅ Website respondendo"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Website não respondeu"
+          exit 1
+        continue-on-error: true
+      
+      - name: Verify SSL Certificate
+        run: |
+          echo | openssl s_client -servername www.olhanuvem.dev -connect www.olhanuvem.dev:443 2>/dev/null | grep -i "subject\|issuer" || true

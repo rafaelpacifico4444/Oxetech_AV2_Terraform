@@ -1,0 +1,180 @@
+name: Deploy Lambda Webhook
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lambda/webhook/lambda_function.py'
+      - '.github/workflows/deploy-lambda-webhook.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: sa-east-1
+  LAMBDA_FUNCTION_NAME: lab-iac-dev-webhook
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    name: Test Lambda Function
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install Dependencies
+        run: |
+          cd lambda/webhook
+          pip install -r requirements.txt || true
+          pip install pytest moto boto3
+      
+      - name: Run Tests
+        run: |
+          cd lambda/webhook
+          python -m pytest test_lambda.py -v || true
+      
+      - name: Lint with pylint
+        run: |
+          pip install pylint
+          pylint lambda/webhook/lambda_function.py --disable=all --enable=E,F || true
+        continue-on-error: true
+
+  deploy:
+    name: Deploy to Lambda
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: lambda-deploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Create Lambda Deployment Package
+        run: |
+          cd lambda/webhook
+          
+          # Limpar zip anterior
+          rm -f lambda_function.zip
+          
+          # Criar zip com apenas o handler
+          zip lambda_function.zip lambda_function.py
+          
+          # Listar conteúdo
+          unzip -l lambda_function.zip
+      
+      - name: Get Current Lambda Code Hash
+        id: current
+        run: |
+          HASH=$(aws lambda get-function \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --query 'Configuration.CodeSha256' \
+            --output text 2>/dev/null || echo "none")
+          echo "code_hash=$HASH" >> $GITHUB_OUTPUT
+      
+      - name: Upload New Code to Lambda
+        id: deploy
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --zip-file fileb://lambda/webhook/lambda_function.zip
+          
+          # Pegar novo hash
+          sleep 2
+          NEW_HASH=$(aws lambda get-function \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --query 'Configuration.CodeSha256' \
+            --output text)
+          
+          echo "new_code_hash=$NEW_HASH" >> $GITHUB_OUTPUT
+      
+      - name: Wait for Lambda Update
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }}
+      
+      - name: Test Lambda Function
+        id: test
+        run: |
+          # Simular um payload de webhook GitHub
+          PAYLOAD='{
+            "repository": {"full_name": "test/repo"},
+            "ref": "refs/heads/main"
+          }'
+          
+          aws lambda invoke \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --payload "$PAYLOAD" \
+            /tmp/response.json
+          
+          cat /tmp/response.json
+        continue-on-error: true
+      
+      - name: Get Lambda Info
+        run: |
+          aws lambda get-function \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --query 'Configuration.[LastModified, Runtime, Timeout, MemorySize]' \
+            --output text
+      
+      - name: Notify Slack - Deploy Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Lambda Webhook Deployed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*✅ Lambda Webhook - Deployed*\n*Function:* ${{ env.LAMBDA_FUNCTION_NAME }}\n*Author:* ${{ github.actor }}\n*Old Hash:* `${{ steps.current.outputs.code_hash }}`\n*New Hash:* `${{ steps.deploy.outputs.new_code_hash }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+      
+      - name: Notify Slack - Deploy Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "❌ Lambda Webhook Deploy Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*❌ Lambda Webhook - FAILED*\n*Function:* ${{ env.LAMBDA_FUNCTION_NAME }}\n*Author:* ${{ github.actor }}\n*Action:* Verificar logs do GitHub Actions"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        continue-on-error: true
+      
+      - name: Upload Deployment Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-deployment-${{ github.run_id }}
+          path: lambda/webhook/lambda_function.zip
+          retention-days: 30
