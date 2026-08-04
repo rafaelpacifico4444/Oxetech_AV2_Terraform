@@ -24,17 +24,17 @@ jobs:
     environment:
       name: production
       url: https://www.olhanuvem.dev
-
-          # antes do Configure AWS credentials, no workflow
-    - name: Debug GitHub context
-      run: |
-        echo "repo=${{ github.repository }}"
-        echo "ref=${{ github.ref }}"
-        echo "event=${{ github.event_name }}"
-        echo "environment=${{ github.environment }}"
     
     steps:
       - uses: actions/checkout@v4
+
+      # antes do Configure AWS credentials, no workflow
+      - name: Debug GitHub context
+        run: |
+          echo "repo=${{ github.repository }}"
+          echo "ref=${{ github.ref }}"
+          echo "event=${{ github.event_name }}"
+          echo "environment=${{ github.environment }}"
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
