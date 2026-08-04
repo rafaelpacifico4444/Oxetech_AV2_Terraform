@@ -36,8 +36,8 @@ resource "aws_iam_role_policy" "lambda_ssm" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = "ssm:SendCommand"
+        Effect = "Allow"
+        Action = "ssm:SendCommand"
         Resource = [
           "arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript",
           "arn:aws:ec2:${var.aws_region}:*:instance/*"

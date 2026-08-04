@@ -7,12 +7,12 @@ resource "aws_launch_template" "web" {
   instance_type = var.instance_type
   key_name      = aws_key_pair.lab.key_name
   user_data = base64encode(templatefile("${path.module}/../scripts/user-data.sh", {
-  flask_secret_key = var.flask_secret_key
-  db_host          = aws_db_instance.lab.address
-  db_name          = var.db_name
-  db_user          = var.db_username
-  db_password      = var.db_password
-}))
+    flask_secret_key = var.flask_secret_key
+    db_host          = aws_db_instance.lab.address
+    db_name          = var.db_name
+    db_user          = var.db_username
+    db_password      = var.db_password
+  }))
 
   vpc_security_group_ids = [aws_security_group.web.id]
 

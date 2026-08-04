@@ -21,3 +21,4 @@ resource "aws_iam_instance_profile" "ssm" {
   name = "${var.project_name}-${var.environment}-ssm-profile"
   role = aws_iam_role.ssm.name
 }
+

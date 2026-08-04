@@ -29,9 +29,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 # 3. Criar IAM Role que GitHub Actions vai assumir
 resource "aws_iam_role" "github_actions" {
-  name                = "${var.project_name}-${var.environment}-github-actions-role"
-  assume_role_policy  = data.aws_iam_policy_document.github_assume_role.json
-  max_session_duration = 3600  # 1 hora
+  name                 = "${var.project_name}-${var.environment}-github-actions-role"
+  assume_role_policy   = data.aws_iam_policy_document.github_assume_role.json
+  max_session_duration = 3600 # 1 hora
 
   tags = {
     Name = "${var.project_name}-github-actions-role"

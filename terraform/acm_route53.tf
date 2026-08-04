@@ -1,7 +1,6 @@
-# Pressupoe que o dominio ja possui uma Hosted Zone publica no Route 53.
-resource "aws_route53_zone" "primary" {
-  name = var.domain_name
-  tags = { Name = "${var.project_name}-${var.environment}-zone" }
+data "aws_route53_zone" "primary" {
+  name         = var.domain_name
+  private_zone = false
 }
 
 locals {
@@ -36,7 +35,7 @@ resource "aws_route53_record" "validation" {
     }
   }
 
-  zone_id = aws_route53_zone.primary.zone_id
+  zone_id = data.aws_route53_zone.primary.zone_id
   name    = each.value.name
   type    = each.value.type
   records = [each.value.record]
@@ -71,7 +70,7 @@ resource "aws_acm_certificate_validation" "cdn" {
 # Registro DNS final: aponta o subdominio para o CloudFront
 # ---------------------------------------------------------------------------
 resource "aws_route53_record" "site" {
-  zone_id = aws_route53_zone.primary.zone_id
+  zone_id = data.aws_route53_zone.primary.zone_id
   name    = local.site_fqdn
   type    = "A"
 
