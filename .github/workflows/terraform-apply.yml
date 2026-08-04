@@ -95,7 +95,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*✅ Terraform Apply - Success*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Author:* ${{ github.actor }}\n*Branch:* main\n*Website:* ${{ steps.outputs.outputs.WEBSITE_URL }}"
+                    "text": "*✅ Terraform Apply - Success*\n*Commit:* <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n*Author:* ${{ github.actor }}\n*Branch:* main\n*Website:* ${{ steps.outputs.WEBSITE_URL }}"
                   }
                 },
                 {
