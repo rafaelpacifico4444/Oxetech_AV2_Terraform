@@ -1,0 +1,25 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::909176971083:oidc-provider/token.actions.githubusercontent.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": [
+                        "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:ref:refs/heads/master",
+                        "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:ref:refs/heads/main",
+                        "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:environment:production",
+                        "repo:rafaelpacifico4444/Oxetech_AV2_Terraform:pull_request"
+                    ]
+                }
+            }
+        }
+    ]
+}
