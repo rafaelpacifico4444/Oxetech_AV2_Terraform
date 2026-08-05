@@ -47,7 +47,7 @@ resource "aws_autoscaling_group" "web" {
   name_prefix         = "${var.project_name}-${var.environment}-asg-"
   vpc_zone_identifier = aws_subnet.public[*].id
   target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
+  health_check_type   = "EC2"
 
   min_size         = var.asg_min_size
   max_size         = var.asg_max_size
