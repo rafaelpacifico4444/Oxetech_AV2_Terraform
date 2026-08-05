@@ -139,7 +139,7 @@ variable "db_name" {
 variable "db_username" {
   description = "Usuário administrador do banco"
   type        = string
-  default     = "postgres"
+  default     = "dbadmin"
 }
 
 variable "db_password" {
