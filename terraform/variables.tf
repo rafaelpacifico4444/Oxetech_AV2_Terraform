@@ -182,6 +182,12 @@ variable "domain_name" {
   type        = string
 }
 
+variable "route53_zone_id" {
+  description = "ID da hosted zone pública existente no Route 53 para o domínio raiz"
+  type        = string
+  default     = "Z038815616BMKEPRA3A7R"
+}
+
 variable "subdomain" {
   description = "Subdomínio usado para o site (ex: www -> www.meusite.com). Deixe vazio para usar o domínio raiz."
   type        = string
