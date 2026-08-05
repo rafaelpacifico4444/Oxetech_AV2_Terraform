@@ -133,7 +133,7 @@ variable "db_instance_class" {
 variable "db_name" {
   description = "Nome do banco de dados inicial"
   type        = string
-  default     = ""
+  default     = "labdb"
 }
 
 variable "db_username" {
