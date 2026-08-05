@@ -27,32 +27,18 @@ resource "aws_acm_certificate" "site" {
   tags = { Name = "${var.project_name}-${var.environment}-acm-regional" }
 }
 
-locals {
-  all_validation_options = distinct(concat(
-    tolist(aws_acm_certificate.site.domain_validation_options),
-    tolist(aws_acm_certificate.cdn.domain_validation_options)
-  ))
-}
-
 resource "aws_route53_record" "validation" {
-  for_each = {
-    for dvo in local.all_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+  name    = tolist(aws_acm_certificate.site.domain_validation_options)[0].resource_record_name
+  type    = tolist(aws_acm_certificate.site.domain_validation_options)[0].resource_record_type
+  records = [tolist(aws_acm_certificate.site.domain_validation_options)[0].resource_record_value]
+  ttl     = 60
 
   zone_id = data.aws_route53_zone.primary.zone_id
-  name    = each.value.name
-  type    = each.value.type
-  records = [each.value.record]
-  ttl     = 60
 }
 
 resource "aws_acm_certificate_validation" "site" {
   certificate_arn         = aws_acm_certificate.site.arn
-  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
+  validation_record_fqdns = [aws_route53_record.validation.fqdn]
 }
 
 # ---------------------------------------------------------------------------
@@ -71,7 +57,7 @@ resource "aws_acm_certificate" "cdn" {
 resource "aws_acm_certificate_validation" "cdn" {
   provider                = aws.us_east_1
   certificate_arn         = aws_acm_certificate.cdn.arn
-  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
+  validation_record_fqdns = [aws_route53_record.validation.fqdn]
 }
 
 # ---------------------------------------------------------------------------
