@@ -28,4 +28,4 @@ def handler(event, context):
             "cd /opt/app && git pull && systemctl restart gunicorn"
         ]},
     )
-    return {"statusCode": 200, "body": "deploy disparado"}
+    return {"statusCode": 200, "body": "deploy disparado"}# test trigger deploy lambda
