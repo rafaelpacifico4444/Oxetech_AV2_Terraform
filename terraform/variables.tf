@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Nome do projeto"
   type        = string
-  default     = "av2-oxetech"
+  default     = "lab-iac"
 }
 
 variable "environment" {
