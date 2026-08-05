@@ -50,7 +50,11 @@ jobs:
       - name: Terraform Init
         run: |
           cd terraform
-          terraform init
+          terraform init \
+            -backend-config="bucket=bucket-s3-av2-tf" \
+            -backend-config="key=terraform/terraform.tfstate" \
+            -backend-config="region=sa-east-1" \
+            -backend-config="encrypt=true"
       
       - name: Terraform Validate
         run: |
