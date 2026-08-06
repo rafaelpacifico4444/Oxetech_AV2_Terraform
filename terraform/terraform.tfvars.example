@@ -1,0 +1,16 @@
+owner           = "SeuNome"
+aws_region      = "sa-east-1"
+project_name    = "NomeDoProjeto"
+environment     = "NomeDoEnvirnment"
+instance_type   = "t3.micro"
+release_version = "versão"
+
+domain_name = "nomeDoDominio"
+subdomain   = "subDominio"
+
+bucket_name = "nomeDOBucket"
+
+db_name     = "labdb"
+db_username = "dbadmin"
+
+public_key_path = "caminhoDaChave"
