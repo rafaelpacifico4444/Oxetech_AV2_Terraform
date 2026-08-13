@@ -66,8 +66,7 @@ ALB (Application Load Balancer)
      Git push → API Gateway → Lambda → SSM → EC2 (git pull + restart)
 ```
 
-
-![Arquitetura da rede](Pasted image 20260813194054.png)
+<img width="8648" height="5608" alt="Pasted image 20260813194054 1" src="https://github.com/user-attachments/assets/ffa1c8e3-8672-438b-88be-bfc8c633cc05" />
 
 ---
 ### Fluxos de Automação e Deploy
