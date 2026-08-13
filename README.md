@@ -193,7 +193,7 @@ curl -I https://www.olhanuvem.dev 2>&1 | grep -i "x-cache"
 
 Acesse Settings → Webhooks e remova o webhook antes de destruir para evitar erros de chamadas para URL inexistente.
 
-### 2. Plan de destroy
+### 2. Plan de destroy (Inside Terraform folder)
 
 ```bash
 source .env
