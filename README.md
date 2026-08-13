@@ -67,7 +67,7 @@ ALB (Application Load Balancer)
 ```
 
 
-![[Pasted image 20260813194054.png]]
+![Arquitetura da rede](Pasted image 20260813194054.png)
 
 ---
 ### Fluxos de Automação e Deploy
